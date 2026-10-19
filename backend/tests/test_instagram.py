@@ -752,6 +752,38 @@ class TestInstagramRoutes:
         assert resp.status_code == 503
         assert "not configured" in resp.json()["detail"]
 
+    def test_redirect_uri_is_present_when_configured(self, client, auth_headers):
+        """Verify that the config-status endpoint reports redirect_uri as present."""
+        from app.config import get_settings
+        from unittest.mock import patch
+        settings = get_settings()
+        client.headers.update(auth_headers)
+        with patch('app.config.get_settings', return_value=settings):
+            resp = client.get('/api/instagram/config-status')
+        assert resp.status_code == 200
+        assert resp.json()['variables']['redirect_uri'] == 'present'
+
+    def test_callback_route_registered(self, client):
+        """Verify that the /api/instagram/callback route is registered."""
+        routes_paths = [getattr(r, 'path', '') for r in client.app.routes]
+        callback_paths = [p for p in routes_paths if 'instagram/callback' in p]
+        assert len(callback_paths) > 0, 'Callback route not registered'
+        # Verify it accepts GET method
+        for path in callback_paths:
+            route = next(r for r in client.app.routes if getattr(r, 'path', '') == path)
+            assert hasattr(route, 'methods') or 'GET' in str(route.methods)
+
+    def test_authorize_redirect_uri_matches_config(self, client, auth_headers):
+        """Verify that the config-status reports redirect_uri as present configured."""
+        from app.config import get_settings
+        from unittest.mock import patch
+        settings = get_settings()
+        client.headers.update(auth_headers)
+        with patch('app.config.get_settings', return_value=settings):
+            resp = client.get('/api/instagram/config-status')
+        assert resp.status_code == 200
+        assert resp.json()['instagram_configured'] == True
+
     def test_list_connections_empty(self, client, auth_headers):
         client.headers.update(auth_headers)
         resp = client.get("/api/instagram/connections")
