@@ -126,11 +126,20 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(settings.cors_origins) or ["*"],
+    allow_origins=[
+        "https://content-mind.dattarishikesh2498.workers.dev",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=list(settings.cors_origins) or ["*"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 app.include_router(router, prefix=settings.api_prefix)
 
