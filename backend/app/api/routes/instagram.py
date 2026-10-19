@@ -21,7 +21,7 @@ from typing import Literal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -415,3 +415,35 @@ async def get_account_insights(
     except InstagramAPIError as e:
         logger.warning("Insights fetch failed: %s", e)
         raise HTTPException(status_code=502, detail=f"Failed to fetch insights: {e}")
+
+
+@router.get("/config-status", response_model=dict)
+def config_status() -> dict:
+    """Safe diagnostic: reports which required Instagram configuration variables
+    are present or missing without exposing their values.
+
+    Returns:
+        - instagram_configured: bool
+        - variables: dict with keys 'app_id', 'app_secret', 'redirect_uri'
+          each valued 'present' or 'missing'
+    """
+    from app.config import get_settings
+    settings = get_settings()
+    required = {
+        "instagram_configured": settings.instagram_configured,
+    }
+    var_status: dict[str, str] = {}
+    if settings.instagram_app_id:
+        var_status["app_id"] = "present"
+    else:
+        var_status["app_id"] = "missing"
+    if settings.instagram_app_secret:
+        var_status["app_secret"] = "present"
+    else:
+        var_status["app_secret"] = "missing"
+    if settings.instagram_redirect_uri:
+        var_status["redirect_uri"] = "present"
+    else:
+        var_status["redirect_uri"] = "missing"
+    required["variables"] = var_status
+    return required
