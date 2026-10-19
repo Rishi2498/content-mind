@@ -1,0 +1,22 @@
+service:
+  name: content-mind
+  env: python
+  rootDir: backend
+  plan: free
+  autoDeploy: true
+
+services:
+  - type: web
+    name: content-mind
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      DATABASE_URL: postgres+psycopg://neon_user:neon_pass@ep-name.region.neon.tech/contentmind
+      SECRET_KEY: your-super-secret-key-change-this
+      ENVIRONMENT: production
+      CORS_ORIGINS: https://content-mind.dattarishikesh2498.workers.dev
+      LLM_PROVIDER: gemini
+      GEMINI_API_KEY: your-gemini-key
+      LLM_MODEL: gemini-3.8-flash

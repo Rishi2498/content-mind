@@ -126,8 +126,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[ 
+    allow_origins=[
         "https://content-mind.dattarishikesh2498.workers.dev",
+        "https://content-mind-1jmb.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
