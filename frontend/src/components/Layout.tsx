@@ -417,6 +417,11 @@ export function Layout({ children }: { children: ReactNode }) {
 
         <main className="min-w-0 flex-1 px-4 py-6 pb-16 lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+          <footer className="border-t border-border-light pt-8 text-center text-sm text-text-tertiary dark:border-border-medium dark:text-bg-secondary/50">
+            <a href="/privacy-policy" className="underline font-medium text-primary-600 dark:text-primary-400">Privacy Policy</a>
+            <span className="mx-4">|</span>
+            <a href="/terms-of-service" className="underline font-medium text-primary-600 dark:text-primary-400">Terms of Service</a>
+          </footer>
         </main>
       </div>
     </div>

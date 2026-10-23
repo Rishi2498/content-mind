@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+﻿import type { ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { Layout } from './components/Layout'
@@ -17,6 +17,8 @@ import { Learned } from './pages/Learned'
 import { Login } from './pages/Login'
 import { MediaLibrary } from './pages/MediaLibrary'
 import { Performance } from './pages/Performance'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import { Reviewer } from './pages/Reviewer'
 import { Signup } from './pages/Signup'
 import { Strategy } from './pages/Strategy'
@@ -36,6 +38,8 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route
               path="*"
               element={
