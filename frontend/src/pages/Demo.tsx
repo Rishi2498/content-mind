@@ -1,18 +1,30 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import { api, apiErrorMessage } from '../api'
+import { Link } from 'react-router-dom'
 import { useHealth } from '../context/HealthContext'
 import { ExpandableMemoryList } from '../components/MemoryCitations'
 import { Card, Chip, ErrorNote, SectionHeader } from '../components/ui'
-import type { ChatResponse, DemoResetResponse } from '../types'
+import type { ChatResponse, DemoResetResponse, DemoSeedResponse } from '../types'
 import { renderInline, splitBlocks } from '../utils/format'
-
 interface ComparePayload {
   without_memory: ChatResponse
   with_memory: ChatResponse
   difference: string
 }
+
+interface CreatorProfile {
+  value: string
+  label: string
+  description: string
+}
+
+const CREATOR_PROFILES: CreatorProfile[] = [
+  { value: 'educational', label: 'Educational Creator', description: 'B2B AI automation tutorials, prompt engineering, thought leadership' },
+  { value: 'fitness', label: 'Fitness Creator', description: 'Workout routines, progress tracking, nutrition science' },
+  { value: 'food', label: 'Food Creator', description: 'Recipes, cooking techniques, food photography' },
+  { value: 'technology', label: 'Technology Creator', description: 'Tech reviews, AI tools, software tutorials' },
+]
 
 export function Demo() {
   const { health, refresh } = useHealth()
@@ -20,15 +32,20 @@ export function Demo() {
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [resetNote, setResetNote] = useState<string | null>(null)
+  const [seedNote, setSeedNote] = useState<string | null>(null)
+  const [profile, setProfile] = useState<CreatorProfile | null>(null)
 
   async function seed() {
     setBusy('seed')
     setError(null)
     setResetNote(null)
+    setSeedNote(null)
     setCompare(null)
     try {
       await api.post('/demo/reset')
-      await api.post('/demo/seed', {})
+      await api.post('/demo/seed', { profile: profile?.value })
+      const { data } = await api.post<DemoSeedResponse>('/demo/seed', { profile: profile?.value })
+      setSeedNote(data.message)
       await refresh()
     } catch (err) {
       setError(apiErrorMessage(err))
@@ -41,6 +58,7 @@ export function Demo() {
     setBusy('reset')
     setError(null)
     setCompare(null)
+    setSeedNote(null)
     try {
       const { data } = await api.post<DemoResetResponse>('/demo/reset')
       setResetNote(data.message)
@@ -82,11 +100,43 @@ export function Demo() {
 
   const hasHistory = (health?.database.content_count ?? 0) > 0
 
+  // Demo mode validation controls
+  async function runValidations() {
+    setBusy('validate')
+    setError(null)
+    setResetNote(null)
+    setSeedNote(null)
+    try {
+      // Step 1: Reset and seed with current profile
+      await api.post('/demo/reset')
+      await api.post('/demo/seed', { profile: profile?.value })
+      setSeedNote('Reset and seeded demo corpus with profile: ' + (profile?.label ?? 'none'))
+
+      // Step 2: Run compare
+      await api.post('/demo/compare')
+      setSeedNote((prev: string | null) => prev + '\n\nStep 2: Compare run (with/without memory)')
+
+      // Step 3: Publish plan
+      await api.post('/demo/publish-plan', { days: 7, posts_per_day: 2, platforms: ['LinkedIn'] })
+      setSeedNote((prev: string | null) => prev + '\n\nStep 3: Plan published and learned from')
+
+      // Step 4: Learn round
+      await api.post('/demo/learn-round')
+      setSeedNote((prev: string | null) => prev + '\n\nStep 4: Learn round added fresh content')
+
+      await refresh()
+    } catch (err) {
+      setError(apiErrorMessage(err))
+    } finally {
+      setBusy(null)
+    }
+  }
+
   return (
-    <>
+    <div>
       <SectionHeader
-        title="Memory Demo"
-        subtitle="The same question, answered with and without long-term memory. Then feed results back and watch the recommendation change."
+        title="Demo Mode"
+        subtitle="Test all ContentMind features with synthetic creator data. Select a creator profile to load a distinct synthetic corpus."
         action={
           <Link to="/learned" className="btn btn-secondary">
             What it's learned
@@ -97,9 +147,9 @@ export function Demo() {
       <Card className="mb-5">
         <h2 className="text-sm font-semibold">Run the story</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-ink-300">
-          Each step is idempotent. Start from a clean slate, load 72 synthetic content items with realistic
-          performance patterns, ask the question both ways, then publish the plan and observe what the next
-          recommendation does.
+          Each step is idempotent. Start from a clean slate, load 72 synthetic content items
+          with realistic performance patterns, ask the question both ways, then publish
+          the plan and observe what the next recommendation does.
         </p>
         <div className="mt-4 flex flex-wrap gap-2.5">
           <button type="button" className="btn btn-primary" onClick={seed} disabled={busy !== null}>
@@ -114,6 +164,14 @@ export function Demo() {
           <button type="button" className="btn btn-secondary" onClick={reset} disabled={busy !== null}>
             Reset everything
           </button>
+<button
+            type="button"
+            className="btn btn-tertiary"
+            onClick={runValidations}
+            disabled={busy !== null}
+          >
+            {busy === 'validate' ? 'Validating…' : 'Run All Validations'}
+          </button>
         </div>
         {error && (
           <div className="mt-4">
@@ -123,10 +181,38 @@ export function Demo() {
         {resetNote && (
           <p className="mt-3 text-sm text-mint-400">{resetNote}</p>
         )}
+        {seedNote && (
+          <p className="mt-3 text-sm text-mint-400">{seedNote}</p>
+        )}
         {!hasHistory && !error && (
           <p className="mt-3 text-sm text-ink-400">
             No content yet. Start with step 1 to load the demo corpus.
           </p>
+        )}
+      </Card>
+
+      <Card className="mb-5">
+        <h2 className="text-sm font-semibold">Select creator profile</h2>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-300">
+          Each profile loads a distinct synthetic corpus with topic emphases, performance
+          patterns, and analytics calibrated for that niche.
+        </p>
+<div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {CREATOR_PROFILES.map((p) => (
+            <button
+              key={p.value}
+              className={`btn btn-${
+                profile?.value === p.value ? 'default' : 'outline'
+              }`}
+              onClick={() => setProfile(p)}
+              disabled={busy !== null}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        {profile && (
+          <p className="mt-2 text-xs text-ink-500">{profile.description}</p>
         )}
       </Card>
 
@@ -180,15 +266,15 @@ export function Demo() {
                 Without memory
               </div>
               <p className="mt-1.5 text-sm leading-relaxed text-ink-300">
-                Generic advice. It will tell you to know your audience, post consistently, and use good
-                visuals — none of which is specific to you.
+                Generic advice. It will tell you to know your audience, post consistently, and
+                use good visuals — none of which is specific to you.
               </p>
             </div>
             <div>
               <div className="text-xs font-medium uppercase tracking-wider text-mint-400">With memory</div>
               <p className="mt-1.5 text-sm leading-relaxed text-ink-300">
-                Names your actual winners and losers, quotes your real engagement rates, points at the
-                specific gaps in your coverage, and cites the memories it used to do it.
+                Names your actual winners and losers, quotes your real engagement rates, points
+                at the specific gaps in your coverage, and cites the memories it used to do it.
               </p>
             </div>
           </div>
@@ -217,7 +303,7 @@ export function Demo() {
           ))}
         </ol>
       </Card>
-    </>
+    </div>
   )
 }
 

@@ -29,7 +29,7 @@ const BLANK = {
 export function AddContent() {
   const { health } = useHealth()
   const [form, setForm] = useState({ ...BLANK })
-  const [publishedAt, setPublishedAt] = useState('')
+  const [publishedAt, setPublishedAt] = useState<Date | string>('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<IngestResponse | null>(null)

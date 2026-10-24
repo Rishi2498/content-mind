@@ -75,11 +75,17 @@ def reset_demo(db: Session, user_id: int) -> DemoResetResponse:
 
 
 def seed_demo(db: Session, request: DemoSeedRequest, user_id: int) -> DemoSeedResponse:
-    """Populate structured history, derive insights, and remember it in Hindsight."""
+    """Populate structured history, derive insights, and remember it in Hindsight.
+
+    The ``request.profile`` selects a creator niche (educational, fitness, food,
+    technology) which alters the seeded topic distribution and synthetic
+    performance patterns.  When ``profile`` is omitted the default (educational)
+    weighting is used.
+    """
     if request.reset_first:
         reset_demo(db, user_id)
 
-    rows = generate_seed_payloads(request.records)
+    rows = generate_seed_payloads(request.records, seed=20260929, profile=request.profile)
     warnings: list[str] = []
 
     existing_titles = {

@@ -85,174 +85,175 @@ export function Reviewer() {
   }
 
   return (
-    <>
-      <SectionHeader
-        title="Pre-Publish Reviewer"
-        subtitle="Paste a draft before you publish. Get hook, clarity, and brand scores with evidence-based suggestions."
-        action={
-          <Link to="/media" className="btn btn-secondary">
-            Review media assets →
-          </Link>
-        }
-      />
+    <div className="min-h-screen py-6 bg-bg-primary">
+      <div className="max-w-7xl mx-auto px-4">
+        <SectionHeader
+          title="Pre-Publish Reviewer"
+          subtitle="Paste a draft before you publish. Get hook, clarity, and brand scores with evidence-based suggestions."
+          action={
+            <Link to="/media" className="btn btn-secondary">
+              Review media assets →
+            </Link>
+          }
+        />
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <form onSubmit={submit} className="space-y-4 lg:col-span-2">
-          <Card>
-            <h2 className="mb-4 text-sm font-semibold">Your draft</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="label" htmlFor="r-title">
-                  Title / hook line <span className="text-ink-600">(optional)</span>
-                </label>
-                <input
-                  id="r-title"
-                  className="field"
-                  maxLength={300}
-                  placeholder="How we cut reporting time by 60%"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="label" htmlFor="r-body">
-                  Body <span className="text-rose-alert">*</span>
-                </label>
-                <textarea
-                  id="r-body"
-                  className="field min-h-44 resize-y"
-                  required
-                  minLength={10}
-                  maxLength={20000}
-                  placeholder="Paste the full post or script you are about to publish."
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                />
-                <p className="mt-1 text-[0.68rem] text-ink-600 tabular-nums">{body.length} / 20,000 characters</p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <form onSubmit={submit} className="space-y-6 lg:col-span-1">
+            <Card>
+              <h2 className="mb-4 text-sm font-semibold text-text-primary">Your draft</h2>
+              <div className="space-y-5">
                 <div>
-                  <label className="label" htmlFor="r-platform">
-                    Platform
+                  <label className="label text-sm font-medium text-text-primary">
+                    <span className="required text-text-error">*</span> Body
                   </label>
-                  <select id="r-platform" className="field" value={platform} onChange={(e) => setPlatform(e.target.value)}>
-                    {PLATFORMS.map((p) => (
-                      <option key={p} value={p}>
-                        {p || '(unspecified)'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="label" htmlFor="r-topic">
-                    Topic
-                  </label>
-                  <input
-                    id="r-topic"
-                    className="field"
-                    maxLength={120}
-                    placeholder="AI automation"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
+                  <textarea
+                    id="r-body"
+                    className="field min-h-48 resize-y"
+                    required
+                    minLength={10}
+                    maxLength={20000}
+                    placeholder="Paste the full post or script you are about to publish."
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
                   />
+                  <p className="mt-1 text-[0.68rem] text-text-tertiary">
+                    {body.length} / 20,000 characters
+                  </p>
                 </div>
-              </div>
-            </div>
-            {error && <div className="mt-4"><ErrorNote message={error} /></div>}
-            <div className="mt-5">
-              <button type="submit" className="btn btn-primary" disabled={reviewing}>
-                {reviewing ? 'Reviewing…' : 'Review draft'}
-              </button>
-            </div>
-          </Card>
-        </form>
-
-        <div className="space-y-4">
-          {result ? (
-            <>
-              <Card className="border-brand-500/40">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold">Scores</h2>
-                  <div className="flex items-center gap-2">
-                    {result.degraded && <Chip tone="warning">heuristic</Chip>}
-                    <Chip tone="success">{Math.round(result.overall_score)} overall</Chip>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="label text-sm font-medium text-text-primary">
+                      Platform
+                    </label>
+                    <select
+                      className="field"
+                      value={platform}
+                      onChange={(e) => setPlatform(e.target.value)}
+                    >
+                      {PLATFORMS.map((p) => (
+                        <option key={p} value={p}>
+                          {p || '(unspecified)'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label text-sm font-medium text-text-primary">
+                      Topic
+                    </label>
+                    <input
+                      className="field"
+                      maxLength={120}
+                      placeholder="AI automation"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                    />
                   </div>
                 </div>
-                <div className="mt-4 space-y-4">
-                  <ScoreGauge label="Hook" value={result.hook_score} />
-                  <ScoreGauge label="Clarity" value={result.clarity_score} />
-                  <ScoreGauge label="Brand alignment" value={result.brand_alignment} />
+                {error && <ErrorNote message={error} />}
+                <div className="mt-4">
+                  <button type="submit" className="btn btn-primary" disabled={reviewing}>
+                    {reviewing ? 'Reviewing…' : 'Review draft'}
+                  </button>
                 </div>
-                {result.summary && <p className="mt-4 text-sm leading-relaxed text-ink-300">{result.summary}</p>}
-                {result.degraded && (
-                  <p className="mt-3 text-xs text-amber-glow">
-                    No LLM configured — scores come from the deterministic heuristic engine.
-                  </p>
-                )}
-              </Card>
-
-              <Card>
-                <h2 className="text-sm font-semibold">
-                  Suggestions ({result.suggestions.length})
-                </h2>
-                {result.suggestions.length === 0 ? (
-                  <p className="mt-2 text-sm text-ink-400">Nothing flagged — looks ready to publish.</p>
-                ) : (
-                  <ul className="mt-3 space-y-3">
-                    {result.suggestions.map((s, i) => (
-                      <SuggestionCard key={i} suggestion={s} />
-                    ))}
-                  </ul>
-                )}
-              </Card>
-            </>
-          ) : (
-            <Card>
-              <h2 className="text-sm font-semibold">How reviews work</h2>
-              <ol className="mt-3 space-y-2.5 text-sm text-ink-300">
-                {[
-                  'Your brand profile and learned memories are recalled as evidence.',
-                  'The draft is scored on hook, clarity, and brand alignment (0-100).',
-                  'Each suggestion cites the brand rule or memory that justifies it.',
-                  'Edit the draft and re-review — history tracks your iterations.',
-                ].map((step, i) => (
-                  <li key={step} className="flex gap-2.5">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-ink-600 text-[0.65rem] text-ink-400">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </Card>
-          )}
-
-          <Card>
-            <h2 className="text-sm font-semibold">Recent reviews</h2>
-            {historyLoading ? (
-              <div className="mt-3">
-                <Spinner label="Loading history…" />
               </div>
-            ) : history.length === 0 ? (
-              <p className="mt-2 text-sm text-ink-400">No reviews yet.</p>
+            </Card>
+          </form>
+
+          <div className="space-y-6 lg:col-span-1">
+            {result ? (
+              <>
+                <Card className="border-brand-500/40">
+                  <h2 className="text-sm font-semibold text-text-primary">Scores</h2>
+                  <div className="mt-4 space-y-4">
+                    <ScoreGauge label="Hook" value={result.hook_score} />
+                    <ScoreGauge label="Clarity" value={result.clarity_score} />
+                    <ScoreGauge label="Brand alignment" value={result.brand_alignment} />
+                  </div>
+                  {result.summary && (
+                    <p className="mt-4 text-sm leading-relaxed text-ink-300">{result.summary}</p>
+                  )}
+                  {result.degraded && (
+                    <p className="mt-3 text-xs text-amber-glow">
+                      No LLM configured — scores come from the deterministic heuristic engine.
+                    </p>
+                  )}
+                </Card>
+
+                <Card>
+                  <h2 className="text-sm font-semibold text-text-primary">
+                    Suggestions ({result.suggestions.length})
+                  </h2>
+                  {result.suggestions.length === 0 ? (
+                    <p className="mt-2 text-sm text-ink-400">
+                      Nothing flagged — looks ready to publish.
+                    </p>
+                  ) : (
+                    <ul className="mt-3 space-y-3">
+                      {result.suggestions.map((s, i) => (
+                        <SuggestionCard key={i} suggestion={s} />
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+              </>
             ) : (
-              <ul className="mt-3 divide-y divide-ink-700">
-                {history.map((h) => (
-                  <li key={h.id} className="flex items-center justify-between gap-2 py-2 text-xs">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium">{h.title || h.draft_excerpt.slice(0, 40) || 'Untitled'}</div>
-                      <div className="text-ink-500">
-                        {h.source} · {new Date(h.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                    <Chip tone={h.overall_score >= 75 ? 'success' : h.overall_score >= 50 ? 'primary' : 'warning'}>
-                      {Math.round(h.overall_score)}
-                    </Chip>
-                  </li>
-                ))}
-              </ul>
+              <Card>
+                <h2 className="text-sm font-semibold text-text-primary">How reviews work</h2>
+                <ol className="mt-3 space-y-2.5 text-sm text-text-tertiary">
+                  {
+                    [
+                      'Your brand profile and learned memories are recalled as evidence.',
+                      'The draft is scored on hook, clarity, and brand alignment (0-100).',
+                      'Each suggestion cites the brand rule or memory that justifies it.',
+                      'Edit the draft and re-review — history tracks your iterations.',
+                    ].map((step, i) => (
+                      <li key={step} className="flex gap-2.5">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-ink-600 text-[0.65rem] text-ink-400">
+                          {i + 1}
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  }
+                </ol>
+              </Card>
             )}
-          </Card>
+
+            <Card>
+              <h2 className="text-sm font-semibold text-text-primary">Recent reviews</h2>
+              {historyLoading ? (
+                <div className="mt-3">
+                  <Spinner label="Loading history…" />
+                </div>
+              ) : history.length === 0 ? (
+                <p className="mt-2 text-sm text-ink-400">No reviews yet.</p>
+              ) : (
+                <ul className="mt-3 divide-y divide-border-light dark:divide-border-medium">
+                  {history.map((h) => (
+                    <li
+                      key={h.id}
+                      className="flex items-center justify-between gap-2 py-2 text-xs border-b border-border-light dark:border-border-medium last:mb-0 dark:text-ink-300"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-text-primary">
+                          {h.title || h.draft_excerpt.slice(0, 40) || 'Untitled'}
+                        </div>
+                        <div className="text-ink-500 text-xs">
+                          {h.source} · {new Date(h.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <Chip
+                        tone={h.overall_score >= 75 ? 'success' : h.overall_score >= 50 ? 'primary' : 'warning'}
+                      >
+                        {Math.round(h.overall_score)}
+                      </Chip>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
         </div>
       </div>
     </>

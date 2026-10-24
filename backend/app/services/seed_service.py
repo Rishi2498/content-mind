@@ -10,6 +10,9 @@ Hidden patterns (the agent should rediscover them, not be told them):
   medium   thought leadership, prompt engineering, newsletters
   weak     generic company announcements and AI news roundups
   thin     AI ROI, AI security, AI costs, adoption mistakes   -> the gaps
+
+Each creator niche has a distinct topic weighting so the demo corpus
+covers educational, fitness, food, and technology creator profiles.
 """
 
 from __future__ import annotations
@@ -37,6 +40,60 @@ TOPIC_PROFILE: dict[str, tuple[float, float]] = {
     "Product updates": (0.55, 2.0),
     "Company announcements": (0.45, 1.8),
     "Thought leadership": (1.20, 1.6),
+}
+
+# Creator-niche profile topic weightings.
+# Each maps topic names to (engagement_multiplier, sampling_weight).
+# Topics not listed receive the base TOPIC_PROFILE defaults.
+PROFILE_DEFINITIONS: dict[str, dict[str, tuple[float, float]]] = {
+    "educational": {
+        "AI automation": (2.10, 6.0),
+        "Prompt engineering": (1.45, 4.0),
+        "Thought leadership": (1.20, 2.0),
+        "Machine learning": (0.95, 2.0),
+        "Data privacy": (0.80, 1.5),
+        "Customer stories": (1.85, 2.5),
+        "Webinars": (0.85, 2.0),
+        "Product updates": (0.55, 2.5),
+        "AI news": (0.62, 4.0),
+        "Company announcements": (0.45, 3.0),
+    },
+    "fitness": {
+        "AI implementation costs": (0.88, 1.5),
+        "AI adoption mistakes": (0.92, 1.5),
+        "Customer stories": (1.85, 3.0),
+        "Thought leadership": (1.20, 2.0),
+        "Product updates": (0.55, 2.0),
+        "AI news": (0.62, 3.0),
+        "Machine learning": (0.95, 1.5),
+        "Data privacy": (0.80, 1.0),
+        "Prompt engineering": (1.45, 1.5),
+        "AI security": (0.90, 1.0),
+    },
+    "food": {
+        "AI automation": (2.10, 2.0),
+        "Prompt engineering": (1.45, 1.5),
+        "Customer stories": (1.85, 2.5),
+        "Thought leadership": (1.20, 2.0),
+        "AI implementation costs": (0.88, 1.5),
+        "AI adoption mistakes": (0.92, 1.5),
+        "AI news": (0.62, 3.0),
+        "Machine learning": (0.95, 1.5),
+        "Data privacy": (0.80, 1.0),
+        "Webinars": (0.85, 1.5),
+    },
+    "technology": {
+        "AI automation": (2.10, 5.0),
+        "Prompt engineering": (1.45, 4.0),
+        "Machine learning": (0.95, 3.0),
+        "AI security": (0.90, 2.0),
+        "AI implementation costs": (0.88, 2.0),
+        "AI adoption mistakes": (0.92, 2.0),
+        "Data privacy": (0.80, 2.5),
+        "Customer stories": (1.85, 2.0),
+        "Thought leadership": (1.20, 2.0),
+        "AI news": (0.62, 4.0),
+    },
 }
 
 # content_type -> engagement multiplier
@@ -221,17 +278,39 @@ def _pick_topic(rng: random.Random) -> str:
     return rng.choices(topics, weights=weights, k=1)[0]
 
 
-def _build_rows(count: int, rng: random.Random, days_back: int = 365) -> list[dict]:
+def _get_topic_weight(profile: str, topic: str, rng: random.Random) -> tuple[float, float]:
+    """Return (engagement_multiplier, sampling_weight) for a topic under a profile."""
+    profile_topics = PROFILE_DEFINITIONS.get(profile, {})
+    if topic in profile_topics:
+        return profile_topics[topic]
+    # Fall back to base TOPIC_PROFILE
+    return TOPIC_PROFILE.get(topic, (1.0, 1.0))
+
+
+def _build_rows(
+    count: int, rng: random.Random, days_back: int = 365, profile: str | None = None
+) -> list[dict]:
     """Sample ``count`` distinct (topic, title) pairs, weighted by topic.
 
     Sampling without replacement guarantees the corpus has ``count`` unique
     titles, so the seeded demo never looks artificially repetitive.
+
+    The ``profile`` parameter selects a creator niche (educational, fitness,
+    food, technology) which alters topic sampling weights and emphasis.
+    When ``profile`` is None the base TOPIC_PROFILE weights are used.
     """
     pool: list[tuple[str, str]] = []
     for topic, titles in TITLE_BANK.items():
         for title in titles:
             pool.append((topic, title))
-    weights = [TOPIC_PROFILE[topic][1] for topic, _ in pool]
+
+    # Build weights per-topic per the selected profile.
+    weights = [
+        _get_topic_weight(profile, topic, rng) if profile else TOPIC_PROFILE[topic]
+        for topic, _ in pool
+    ]
+    # Extract just the sampling weight for rng.choices compatibility.
+    weight_values = [w[1] for w in weights]
 
     target = min(count, len(pool))
     # rng.choices-per-call with growing exclusion set: O(n*k) but n<150 here.
@@ -241,7 +320,7 @@ def _build_rows(count: int, rng: random.Random, days_back: int = 365) -> list[di
         remaining = [i for i in range(len(pool)) if i not in taken]
         if not remaining:
             break
-        picked = rng.choices(remaining, weights=[weights[i] for i in remaining], k=1)[0]
+        picked = rng.choices(remaining, weights=[weight_values[i] for i in remaining], k=1)[0]
         taken.add(picked)
         chosen.append(pool[picked])
 
@@ -260,7 +339,7 @@ def _build_rows(count: int, rng: random.Random, days_back: int = 365) -> list[di
         published = now - timedelta(days=rng.randint(1, days_back), hours=rng.randint(0, 23))
 
         p_mult, ctr_mult, reach = PLATFORM_PROFILE[platform]
-        t_mult = TOPIC_PROFILE[topic][0]
+        t_mult, _ = _get_topic_weight(profile, topic, rng) if profile else TOPIC_PROFILE[topic]
         c_mult = TYPE_PROFILE.get(content_type, 1.0)
 
         multiplier = p_mult * t_mult * c_mult
@@ -301,21 +380,32 @@ def _build_rows(count: int, rng: random.Random, days_back: int = 365) -> list[di
     return rows
 
 
-def generate_seed_payloads(count: int = 72, seed: int = 20260929) -> list[dict]:
-    """Deterministic given ``seed`` so demos and tests are reproducible."""
+def generate_seed_payloads(count: int = 72, seed: int = 20260929, profile: str | None = None) -> list[dict]:
+    """Deterministic given ``seed`` so demos and tests are reproducible.
+
+    The ``profile`` parameter selects a creator niche (educational, fitness,
+    food, technology) which alters topic sampling weights and emphasis.
+    When ``profile`` is None the base TOPIC_PROFILE weights are used.
+    """
     rng = random.Random(seed)
-    return _build_rows(count, rng)
+    return _build_rows(count, rng, profile=profile)
 
 
-def generate_followup_payloads(count: int = 3, seed: int = 777) -> list[dict]:
+def generate_followup_payloads(count: int = 3, seed: int = 777, profile: str | None = None) -> list[dict]:
     """The 'we published the plan and here are the results' step of the demo.
 
     These are deliberately placed on topics the gap engine surfaces, so the
-    next plan visibly reflects them.
+    next plan visibly reflects them.  The ``profile`` parameter selects a
+    creator niche so follow-up content is consistent with the current demo
+    profile.
     """
     rng = random.Random(seed)
     now = datetime.now(timezone.utc)
-    topics = ("AI ROI", "AI security", "AI adoption mistakes", "AI implementation costs")
+    # Select topics consistent with the profile if specified.
+    if profile and profile in PROFILE_DEFINITIONS:
+        topics = list(PROFILE_DEFINITIONS[profile].keys())[:4]
+    else:
+        topics = ("AI ROI", "AI security", "AI adoption mistakes", "AI implementation costs")
     platforms = ("LinkedIn", "Blog", "LinkedIn", "Newsletter")
     titles = (
         "How to calculate AI ROI without fooling yourself",
@@ -323,7 +413,7 @@ def generate_followup_payloads(count: int = 3, seed: int = 777) -> list[dict]:
         "Five AI adoption mistakes we made so you don't have to",
         "What an AI implementation actually costs, line by line",
     )
-    types = ("how-to guide", "blog post" if False else "thought leadership", "list post", "case study")
+    types = ("how-to guide", "thought leadership", "list post", "case study")
     rows = []
     for i in range(count):
         topic = topics[i % len(topics)]

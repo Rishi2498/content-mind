@@ -230,6 +230,19 @@ export interface IngestResponse {
   message: string
 }
 
+export interface DemoSeedResponse {
+    content_created: number
+    insights_created: number
+    memories_retained: number
+    memory_backend: string
+    bank: string
+    degraded: boolean
+    warnings: string[]
+    top_topics: string[]
+    date_span: string
+    message: string
+}
+
 export interface DemoResetResponse {
   content_deleted: number
   insights_deleted: number

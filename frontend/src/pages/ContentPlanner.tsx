@@ -57,126 +57,125 @@ export function ContentPlanner() {
   }
 
   return (
-    <>
-      <PageHeader
-        eyebrow="Planner"
-        title="Content Planner"
-        subtitle="Every recommendation is traceable to something ContentMind remembers."
-        actions={
-          <Link to="/learned" className="btn btn-secondary">
-            What it's learned
-          </Link>
-        }
-      />
+    <div className="min-h-screen py-6 bg-bg-primary">
+      <div className="max-w-7xl mx-auto px-4">
+        <PageHeader
+          eyebrow="Planner"
+          title="Content Planner"
+          subtitle="Every recommendation is traceable to something ContentMind remembers."
+          actions={
+            <Link to="/learned" className="btn btn-secondary">
+              What it's learned
+            </Link>
+          }
+        />
 
-      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-        {/* Brief panel */}
-        <Card className="h-fit p-5 xl:sticky xl:top-20">
-          <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-900/40 dark:text-primary-300">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
-                <path d="M4 6h16M4 12h10M4 18h7" />
-              </svg>
+        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+          {/* Brief panel */}
+          <Card className="h-fit p-5 xl:sticky xl:top-20">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-900/40 dark:text-primary-300">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round">
+                  <path d="M4 6h16M4 12h10M4 18h7" />
+                </svg>
+              </div>
+              <h2 className="text-sm font-semibold text-text-primary">Editorial brief</h2>
             </div>
-            <h2 className="text-sm font-semibold text-text-primary">Editorial brief</h2>
-          </div>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label text-sm font-medium text-text-primary">Days</label>
+                  <input
+                    className="input"
+                    id="days"
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={days}
+                    onChange={(e) => setDays(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="label text-sm font-medium text-text-primary">
+                    Posts / day
+                  </label>
+                  <input
+                    className="input"
+                    id="ppd"
+                    type="number"
+                    min={1}
+                    max={3}
+                    value={postsPerDay}
+                    onChange={(e) => setPostsPerDay(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="label" htmlFor="days">
-                  Days
+                <label className="label text-sm font-medium text-text-primary">Platforms</label>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => togglePlatform(p)}
+                      className={`chip ${platforms.includes(p) ? 'border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300' : ''}`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="label text-sm font-medium text-text-primary">
+                  Campaign focus (optional)
                 </label>
                 <input
                   className="input"
-                  id="days"
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={days}
-                  onChange={(e) => setDays(Number(e.target.value))}
+                  placeholder="e.g. AI security series"
+                  value={campaign}
+                  onChange={(e) => setCampaign(e.target.value)}
                 />
+                <p className="mt-1.5 text-[0.68rem] leading-relaxed text-text-tertiary">
+                  The first two slots will be reserved for this theme.
+                </p>
               </div>
-              <div>
-                <label className="label" htmlFor="ppd">
-                  Posts / day
-                </label>
-                <input
-                  className="input"
-                  id="ppd"
-                  type="number"
-                  min={1}
-                  max={3}
-                  value={postsPerDay}
-                  onChange={(e) => setPostsPerDay(Number(e.target.value))}
-                />
-              </div>
-            </div>
 
-            <div>
-              <label className="label">Platforms</label>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {PLATFORM_OPTIONS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => togglePlatform(p)}
-                    className={`chip ${platforms.includes(p) ? 'border-primary-500 bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300' : ''}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <button className="btn btn-primary w-full justify-center" onClick={generate} disabled={generating}>
+                {generating ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    Recalling and planning…
+                  </>
+                ) : (
+                  'Generate plan'
+                )}
+              </button>
             </div>
+          </Card>
 
-            <div>
-              <label className="label" htmlFor="campaign">
-                Campaign focus (optional)
-              </label>
-              <input
-                className="input"
-                id="campaign"
-                placeholder="e.g. AI security series"
-                value={campaign}
-                onChange={(e) => setCampaign(e.target.value)}
+          {/* Workspace */}
+          <div className="space-y-6">
+            {error && <ErrorNote message={error} />}
+
+            {generating && (
+              <Card className="flex items-center gap-3 p-6">
+                <Spinner label="Recalling memories, checking gaps, and composing your calendar…" />
+              </Card>
+            )}
+
+            {!result && !error && !generating && (
+              <EmptyState
+                icon="▦"
+                title="No plan yet"
+                body="Set your brief and generate. ContentMind will recall what has worked, detect what you have not covered, and produce a calendar where every item explains itself."
               />
-              <p className="mt-1.5 text-[0.68rem] leading-relaxed text-text-tertiary">
-                The first two slots will be reserved for this theme.
-              </p>
-            </div>
+            )}
 
-            <button className="btn btn-primary w-full justify-center" onClick={generate} disabled={generating}>
-              {generating ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                  Recalling and planning…
-                </>
-              ) : (
-                'Generate plan'
-              )}
-            </button>
+            {result && <PlanView result={result} />}
           </div>
-        </Card>
-
-        {/* Workspace */}
-        <div className="min-w-0 space-y-5">
-          {error && <ErrorNote message={error} />}
-
-          {generating && (
-            <Card className="flex items-center gap-3 p-6">
-              <Spinner label="Recalling memories, checking gaps, and composing your calendar…" />
-            </Card>
-          )}
-
-          {!result && !error && !generating && (
-            <EmptyState
-              icon="▦"
-              title="No plan yet"
-              body="Set your brief and generate. ContentMind will recall what has worked, detect what you have not covered, and produce a calendar where every item explains itself."
-            />
-          )}
-
-          {result && <PlanView result={result} />}
         </div>
       </div>
     </>

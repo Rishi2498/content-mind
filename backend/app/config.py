@@ -125,6 +125,9 @@ class Settings:
     instagram_sync_cooldown_seconds: int = field(default_factory=lambda: _env_int("INSTAGRAM_SYNC_COOLDOWN_SECONDS", 300))
     instagram_max_posts_per_sync: int = field(default_factory=lambda: _env_int("INSTAGRAM_MAX_POSTS_PER_SYNC", 50))
 
+    # ---- Demo mode --------------------------------------------------------------
+    demo_mode: bool = field(default_factory=lambda: _env_bool("CONTENTMIND_DEMO_MODE", False))
+
     # ---- Media processing (Phase 2) --------------------------------------------
     ffmpeg_path: str = field(default_factory=lambda: _env("FFMPEG_PATH", "ffmpeg"))
     ffprobe_path: str = field(default_factory=lambda: _env("FFPROBE_PATH", "ffprobe"))

@@ -472,6 +472,7 @@ class DemoSeedRequest(BaseModel):
     remember: bool = True
     brand_name: str = "Northwind AI"
     reset_first: bool = False
+    profile: str | None = "educational"
 
 
 class DemoSeedResponse(BaseModel):

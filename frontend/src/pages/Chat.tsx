@@ -53,109 +53,116 @@ export function Chat() {
   }
 
   return (
-    <>
-      <SectionHeader
-        title="AI Strategy Chat"
-        subtitle="Ask anything about your content strategy. The answer shows its sources."
-        action={
-          <Link to="/learned" className="btn btn-secondary">
-            What it's learned
-          </Link>
-        }
-      />
+    <div className="min-h-screen py-6 bg-bg-primary">
+      <div className="max-w-7xl mx-auto px-4">
+        <SectionHeader
+          title="AI Strategy Chat"
+          subtitle="Ask anything about your content strategy. The answer shows its sources."
+          action={
+            <Link to="/learned" className="btn btn-secondary">
+              What it's learned
+            </Link>
+          }
+        />
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card className="flex min-h-[32rem] flex-col p-0">
-            <div ref={scrollRef} className="flex-1 space-y-5 overflow-y-auto p-5">
-              {turns.length === 0 && (
-                <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-                  <h2 className="text-sm font-semibold">
-                    {hasHistory ? 'Ask about your content strategy' : 'ContentMind has nothing to work with yet'}
-                  </h2>
-                  <p className="mx-auto mt-1.5 max-w-md text-sm text-ink-400">
-                    {hasHistory
-                      ? 'Every answer cites the long-term memories it used, so you can check the reasoning rather than trust it.'
-                      : 'Without history, any answer would be generic. Add content, or run the demo, and then ask again.'}
-                  </p>
-                  <div className="mt-5 flex flex-wrap justify-center gap-2">
-                    {(hasHistory ? STARTERS : []).map((s) => (
-                      <button key={s} type="button" className="chip" onClick={() => void ask(s)}>
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {turns.map((turn) => (
-                <TurnView key={turn.id} turn={turn} />
-              ))}
-
-              {busy && (
-                <div className="flex items-center gap-2.5 text-sm text-ink-400">
-                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-600 border-t-brand-400" />
-                  Recalling memories…
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-ink-700 p-4">
-              {error && <ErrorNote message={`${error}`} />}
-              <form
-                className="mt-3 flex gap-2.5"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  void ask(input)
-                }}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="lg:col-span-2">
+            <Card className="flex min-h-[32rem] flex-col p-0">
+              <div
+                ref={scrollRef}
+                className="flex-1 space-y-5 overflow-y-auto p-5"
               >
-                <input
-                  className="field"
-                  placeholder="What should I post next week?"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  disabled={busy}
+                {turns.length === 0 && (
+                  <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+                    <h2 className="text-sm font-semibold">
+                      {hasHistory ? 'Ask about your content strategy' : 'ContentMind has nothing to work with yet'}
+                    </h2>
+                    <p className="mx-auto mt-1.5 max-w-md text-sm text-ink-400">
+                      {hasHistory
+                        ? 'Every answer cites the long-term memories it used, so you can check the reasoning rather than trust it.'
+                        : 'Without history, any answer would be generic. Add content, or run the demo, and then ask again.'}
+                    </p>
+                    <div className="mt-5 flex flex-wrap justify-center gap-2">
+                      {(hasHistory ? STARTERS : []).map((s) => (
+                        <button key={s} type="button" className="chip" onClick={() => void ask(s)}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {turns.map((turn) => (
+                  <TurnView key={turn.id} turn={turn} />
+                ))}
+
+                {busy && (
+                  <div className="flex items-center gap-2.5 text-sm text-text-tertiary">
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-600 border-t-brand-400" />
+                    Recalling memories…
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-border-light p-4">
+                {error && <ErrorNote message={`${error}`} />}
+                <form
+                  className="mt-3 flex gap-2.5"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    void ask(input)
+                  }}
+                >
+                  <input
+                    className="field flex-1"
+                    placeholder="What should I post next week?"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    disabled={busy}
+                  />
+                  <button type="submit" className="btn btn-primary" disabled={busy || !input.trim()}>
+                    Ask
+                  </button>
+                </form>
+              </div>
+            </Card>
+          </div>
+
+          <div className="space-y-4">
+            <Card>
+              <h2 className="text-sm font-semibold text-text-primary">How answers are built</h2>
+              <ol className="mt-3 space-y-2 text-sm text-text-tertiary">
+                {
+                  [
+                    'Your question is decomposed into aspects.',
+                    'Each aspect triggers a separate recall against long-term memory.',
+                    'Performance data is computed live from your history.',
+                    'The model reasons over both, then cites the memories it used.',
+                  ].map((step, i) => (
+                    <li key={step} className="flex gap-2.5">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-ink-600 text-[0.65rem] text-text-tertiary">
+                        {i + 1}
+                      </span>
+                      {step}
+                    </li>
+                  ))}
+                }
+              </ol>
+            </Card>
+
+            <Card>
+              <h2 className="text-sm font-semibold text-text-primary">Right now</h2>
+              <dl className="mt-3 space-y-1.5 text-sm">
+                <SideRow label="Memory" value={health?.memory.backend ?? '—'} />
+                <SideRow label="Memories" value={String(health?.memory.memory_count ?? 0)} />
+                <SideRow label="Items analysed" value={String(health?.database.content_count ?? 0)} />
+                <SideRow
+                  label="Degraded"
+                  value={health?.memory.degraded ? 'yes — local fallback' : 'no'}
                 />
-                <button type="submit" className="btn btn-primary" disabled={busy || !input.trim()}>
-                  Ask
-                </button>
-              </form>
-            </div>
-          </Card>
-        </div>
-
-        <div className="space-y-4">
-          <Card>
-            <h2 className="text-sm font-semibold">How answers are built</h2>
-            <ol className="mt-3 space-y-2 text-sm text-ink-300">
-              {[
-                'Your question is decomposed into aspects.',
-                'Each aspect triggers a separate recall against long-term memory.',
-                'Performance data is computed live from your history.',
-                'The model reasons over both, then cites the memories it used.',
-              ].map((step, i) => (
-                <li key={step} className="flex gap-2.5">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-ink-600 text-[0.65rem] text-ink-400">
-                    {i + 1}
-                  </span>
-                  {step}
-                </li>
-              ))}
-            </ol>
-          </Card>
-
-          <Card>
-            <h2 className="text-sm font-semibold">Right now</h2>
-            <dl className="mt-3 space-y-1.5 text-sm">
-              <SideRow label="Memory" value={health?.memory.backend ?? '—'} />
-              <SideRow label="Memories" value={String(health?.memory.memory_count ?? 0)} />
-              <SideRow label="Items analysed" value={String(health?.database.content_count ?? 0)} />
-              <SideRow
-                label="Degraded"
-                value={health?.memory.degraded ? 'yes — local fallback' : 'no'}
-              />
-            </dl>
-          </Card>
+              </dl>
+            </Card>
+          </div>
         </div>
       </div>
     </>

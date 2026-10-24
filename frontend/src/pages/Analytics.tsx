@@ -17,6 +17,7 @@ import {
 
 import { api, apiErrorMessage } from '../api'
 import { Bar, Card, Chip, EmptyState, ErrorNote, PageHeader, PreviewTile, SegmentedControl, Spinner, Stat } from '../components/ui'
+import { Tooltip as RechartsTooltip } from 'recharts'
 import type { AnalyticsResponse, GroupStat } from '../types'
 import { compact, fullDate, indexLabel, pct } from '../utils/format'
 
@@ -49,6 +50,7 @@ export function Analytics() {
   if (error) {
     return (
       <>
+
         <PageHeader title="Analytics" subtitle="Every number is derived from the content you have recorded." />
         <ErrorNote message={error} />
       </>
@@ -57,6 +59,7 @@ export function Analytics() {
   if (!data) {
     return (
       <>
+
         <PageHeader title="Analytics" />
         <Spinner label="Crunching your numbers…" />
       </>
@@ -175,6 +178,12 @@ export function Analytics() {
               ? 'fully instrumented'
               : 'add results to sharpen ranks'
           }
+        />
+        <Stat
+          label="Content items"
+          value={String(data.content_count)}
+          tone="primary"
+          hint={"Total analysed items"}
         />
       </div>
 
@@ -330,7 +339,7 @@ export function Analytics() {
             </div>
           )}
 
-          <div className="mt-4 grid gap-4 border-t border-border-light pt-4 dark:border-border-medium sm:grid-cols-2">
+<div className="mt-4 grid gap-4 border-t border-border-light pt-4 dark:border-border-medium sm:grid-cols-2">
             <GroupList
               title="Strongest"
               tone="success"
@@ -342,11 +351,10 @@ export function Analytics() {
               tone="error"
               groups={groups.filter((g) => g.index_vs_average < 1).slice(-5).reverse()}
               max={Math.max(...groups.map((g) => g.avg_engagement_rate), 0.01)}
-            />
-          </div>
-        </Card>
+            /></div>
+          </Card>
 
-        <Card className="p-5 xl:col-span-2">
+          <Card className="p-5 xl:col-span-2" style={{ transitionProperty: 'background', transitionDuration: '200ms }}>
           <h2 className="text-sm font-semibold text-text-primary">Reach share by platform</h2>
           <p className="mt-0.5 text-xs text-text-tertiary">Impressions distribution across platforms.</p>
 
@@ -412,46 +420,49 @@ export function Analytics() {
         {data.best_content.length === 0 ? (
           <p className="px-5 py-8 text-center text-sm text-text-tertiary">No items with metrics yet.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th className="w-8">#</th>
-                  <th>Content</th>
-                  <th>Platform</th>
-                  <th>Published</th>
-                  <th className="text-right">Impressions</th>
-                  <th className="text-right">Engagement</th>
-                  <th className="text-right">CTR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.best_content.slice(0, 10).map((item, i) => (
-                  <tr key={item.id}>
-                    <td className="text-text-quaternary tabular-nums">{i + 1}</td>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <PreviewTile seed={item.topic || item.title} className="h-8 w-8 shrink-0 text-xs" />
-                        <div className="min-w-0">
-                          <div className="max-w-md truncate font-medium">{item.title}</div>
-                          <div className="text-[0.7rem] text-text-tertiary">{item.topic}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <Chip>{item.platform}</Chip>
-                    </td>
-                    <td className="whitespace-nowrap text-text-secondary">{fullDate(item.published_at)}</td>
-                    <td className="text-right tabular-nums">{compact(item.impressions)}</td>
-                    <td className="text-right font-semibold tabular-nums text-success-600 dark:text-success-400">
-                      {pct(item.engagement_rate)}
-                    </td>
-                    <td className="text-right tabular-nums text-text-secondary">{pct(item.ctr)}</td>
+<div className="overflow-x-auto">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th className="w-8" className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">#</th>
+                    <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">Content</th>
+                    <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">Platform</th>
+                    <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">Published</th>
+                    <th className="text-right text-xs font-medium text-text-tertiary uppercase tracking-wider">Impressions</th>
+                    <th className="text-right text-xs font-medium text-text-tertiary uppercase tracking-wider">Engagement</th>
+                    <th className="text-right text-xs font-medium text-text-tertiary uppercase tracking-wider">CTR</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {data.best_content.slice(0, 10).map((item, i) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-bg-secondary transition-colors dark:hover:bg-ink-800"
+                    >
+                      <td className="text-text-quaternary tabular-nums">{i + 1}</td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <PreviewTile seed={item.topic || item.title} className="h-8 w-8 shrink-0 text-xs" />
+                          <div className="min-w-0">
+                            <div className="max-w-md truncate font-medium text-text-primary">{item.title}</div>
+                            <div className="text-[0.7rem] text-text-tertiary">{item.topic}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <Chip>{item.platform}</Chip>
+                      </td>
+                      <td className="whitespace-nowrap text-text-secondary">{fullDate(item.published_at)}</td>
+                      <td className="text-right tabular-nums">{compact(item.impressions)}</td>
+                      <td className="text-right font-semibold tabular-nums text-success-600 dark:text-success-400">
+                        {pct(item.engagement_rate)}
+                      </td>
+                      <td className="text-right tabular-nums text-text-secondary">{pct(item.ctr)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
         )}
       </Card>
     </>
