@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { api, apiErrorMessage } from '../api'
@@ -39,7 +39,7 @@ function ScoreGauge({ label, value }: { label: string; value: number }) {
 }
 
 export function Reviewer() {
-  const [title, setTitle] = useState('')
+  const [title] = useState('')
   const [body, setBody] = useState('')
   const [platform, setPlatform] = useState('')
   const [topic, setTopic] = useState('')
@@ -92,7 +92,7 @@ export function Reviewer() {
           subtitle="Paste a draft before you publish. Get hook, clarity, and brand scores with evidence-based suggestions."
           action={
             <Link to="/media" className="btn btn-secondary">
-              Review media assets →
+              Review media assets â†’
             </Link>
           }
         />
@@ -153,7 +153,7 @@ export function Reviewer() {
                 {error && <ErrorNote message={error} />}
                 <div className="mt-4">
                   <button type="submit" className="btn btn-primary" disabled={reviewing}>
-                    {reviewing ? 'Reviewing…' : 'Review draft'}
+                    {reviewing ? 'Reviewingâ€¦' : 'Review draft'}
                   </button>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export function Reviewer() {
                   )}
                   {result.degraded && (
                     <p className="mt-3 text-xs text-amber-glow">
-                      No LLM configured — scores come from the deterministic heuristic engine.
+                      No LLM configured â€” scores come from the deterministic heuristic engine.
                     </p>
                   )}
                 </Card>
@@ -186,7 +186,7 @@ export function Reviewer() {
                   </h2>
                   {result.suggestions.length === 0 ? (
                     <p className="mt-2 text-sm text-ink-400">
-                      Nothing flagged — looks ready to publish.
+                      Nothing flagged â€” looks ready to publish.
                     </p>
                   ) : (
                     <ul className="mt-3 space-y-3">
@@ -196,7 +196,7 @@ export function Reviewer() {
                     </ul>
                   )}
                 </Card>
-              </>
+</>
             ) : (
               <Card>
                 <h2 className="text-sm font-semibold text-text-primary">How reviews work</h2>
@@ -206,7 +206,7 @@ export function Reviewer() {
                       'Your brand profile and learned memories are recalled as evidence.',
                       'The draft is scored on hook, clarity, and brand alignment (0-100).',
                       'Each suggestion cites the brand rule or memory that justifies it.',
-                      'Edit the draft and re-review — history tracks your iterations.',
+                      'Edit the draft and re-review â€” history tracks your iterations.',
                     ].map((step, i) => (
                       <li key={step} className="flex gap-2.5">
                         <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-ink-600 text-[0.65rem] text-ink-400">
@@ -215,7 +215,6 @@ export function Reviewer() {
                         {step}
                       </li>
                     ))}
-                  }
                 </ol>
               </Card>
             )}
@@ -224,7 +223,7 @@ export function Reviewer() {
               <h2 className="text-sm font-semibold text-text-primary">Recent reviews</h2>
               {historyLoading ? (
                 <div className="mt-3">
-                  <Spinner label="Loading history…" />
+                  <Spinner label="Loading historyâ€¦" />
                 </div>
               ) : history.length === 0 ? (
                 <p className="mt-2 text-sm text-ink-400">No reviews yet.</p>
@@ -240,7 +239,7 @@ export function Reviewer() {
                           {h.title || h.draft_excerpt.slice(0, 40) || 'Untitled'}
                         </div>
                         <div className="text-ink-500 text-xs">
-                          {h.source} · {new Date(h.created_at).toLocaleString()}
+                          {h.source} Â· {new Date(h.created_at).toLocaleString()}
                         </div>
                       </div>
                       <Chip
@@ -256,7 +255,7 @@ export function Reviewer() {
           </div>
         </div>
       </div>
-    </>
+</div>
   )
 }
 

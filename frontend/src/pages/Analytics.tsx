@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Bar as RechartsBar,
@@ -17,7 +17,7 @@ import {
 
 import { api, apiErrorMessage } from '../api'
 import { Bar, Card, Chip, EmptyState, ErrorNote, PageHeader, PreviewTile, SegmentedControl, Spinner, Stat } from '../components/ui'
-import { Tooltip as RechartsTooltip } from 'recharts'
+
 import type { AnalyticsResponse, GroupStat } from '../types'
 import { compact, fullDate, indexLabel, pct } from '../utils/format'
 
@@ -61,7 +61,7 @@ export function Analytics() {
       <>
 
         <PageHeader title="Analytics" />
-        <Spinner label="Crunching your numbers…" />
+        <Spinner label="Crunching your numbersâ€¦" />
       </>
     )
   }
@@ -71,7 +71,7 @@ export function Analytics() {
       <>
         <PageHeader title="Analytics" subtitle="Every number is derived from the content you have recorded, not from a black box." />
         <EmptyState
-          icon="◈"
+          icon="â—ˆ"
           title="No data to analyse"
           body="Analytics are calculated from your content history. Add some content and this page fills in."
           action={
@@ -84,12 +84,12 @@ export function Analytics() {
     )
   }
 
-  const coverageStart = data.date_range.start ? fullDate(data.date_range.start) : '—'
-  const coverageEnd = data.date_range.end ? fullDate(data.date_range.end) : '—'
+  const coverageStart = data.date_range.start ? fullDate(data.date_range.start) : 'â€”'
+  const coverageEnd = data.date_range.end ? fullDate(data.date_range.end) : 'â€”'
 
   const groups = data[dimension]
   const chartData = groups.map((g) => ({
-    name: g.key.length > 18 ? `${g.key.slice(0, 17)}…` : g.key,
+    name: g.key.length > 18 ? `${g.key.slice(0, 17)}â€¦` : g.key,
     fullName: g.key,
     index: g.index_vs_average,
     engagement: Number((g.avg_engagement_rate * 100).toFixed(2)),
@@ -120,7 +120,7 @@ export function Analytics() {
         }
       />
 
-      {/* Coverage strip — the /analytics endpoint has no date parameters, so
+      {/* Coverage strip â€” the /analytics endpoint has no date parameters, so
           the covered range is shown read-only rather than as a fake filter. */}
       <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-border-light bg-bg-secondary px-4 py-2.5 text-xs text-text-secondary shadow-xs dark:border-border-medium">
         <span className="inline-flex items-center gap-2">
@@ -128,14 +128,14 @@ export function Analytics() {
           <span className="font-semibold text-text-primary">Data coverage</span>
         </span>
         <span>
-          {coverageStart} → {coverageEnd}
+          {coverageStart} â†’ {coverageEnd}
         </span>
         <span aria-hidden="true" className="text-border-strong">
-          ·
+          Â·
         </span>
         <span>{data.content_count} items analysed</span>
         <span aria-hidden="true" className="text-border-strong">
-          ·
+          Â·
         </span>
         <span>{data.published_with_metrics} with metrics</span>
         <span className="ml-auto text-text-tertiary">
@@ -150,7 +150,7 @@ export function Analytics() {
               key={w}
               className="rounded-lg border border-warning-200 bg-warning-50 px-3.5 py-2 text-sm text-warning-700 dark:border-warning-800 dark:bg-warning-900/30 dark:text-warning-300"
             >
-              ⚠ {w}
+              âš  {w}
             </div>
           ))}
         </div>
@@ -354,7 +354,7 @@ export function Analytics() {
             /></div>
           </Card>
 
-          <Card className="p-5 xl:col-span-2" style={{ transitionProperty: 'background', transitionDuration: '200ms }}>
+          <Card className="p-5 xl:col-span-2" style={{ transitionProperty: 'background', transitionDuration: '200ms' }}>
           <h2 className="text-sm font-semibold text-text-primary">Reach share by platform</h2>
           <p className="mt-0.5 text-xs text-text-tertiary">Impressions distribution across platforms.</p>
 
@@ -413,7 +413,7 @@ export function Analytics() {
             <p className="mt-0.5 text-xs text-text-tertiary">Ranked by engagement rate across your history.</p>
           </div>
           <Link to="/performance" className="text-xs font-semibold text-primary-600 hover:underline dark:text-primary-400">
-            Register results →
+            Register results â†’
           </Link>
         </div>
 
@@ -424,7 +424,7 @@ export function Analytics() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th className="w-8" className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">#</th>
+                    <th className="w-8 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">#</th>
                     <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">Content</th>
                     <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">Platform</th>
                     <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">Published</th>
@@ -501,7 +501,7 @@ function GroupList({
             <div className="flex items-baseline justify-between gap-3 text-xs">
               <span className="truncate font-medium text-text-primary">{g.key}</span>
               <span className="shrink-0 tabular-nums text-text-tertiary">
-                {pct(g.avg_engagement_rate)} · {indexLabel(g.index_vs_average)} · n={g.count}
+                {pct(g.avg_engagement_rate)} Â· {indexLabel(g.index_vs_average)} Â· n={g.count}
               </span>
             </div>
             <div className="mt-1">

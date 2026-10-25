@@ -111,7 +111,7 @@ export function Chat() {
                   onSubmit={(e) => {
                     e.preventDefault()
                     void ask(input)
-                  }}
+}}
                 >
                   <input
                     className="field flex-1"
@@ -146,8 +146,7 @@ export function Chat() {
                       {step}
                     </li>
                   ))}
-                }
-              </ol>
+                </ol>
             </Card>
 
             <Card>
@@ -165,7 +164,7 @@ export function Chat() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

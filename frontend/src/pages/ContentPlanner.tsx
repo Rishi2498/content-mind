@@ -148,7 +148,7 @@ export function ContentPlanner() {
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                     Recalling and planning…
-                  </>
+</>
                 ) : (
                   'Generate plan'
                 )}
@@ -178,7 +178,7 @@ export function ContentPlanner() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

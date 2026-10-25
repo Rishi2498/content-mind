@@ -189,7 +189,7 @@ export function AddContent() {
                     id="published"
                     type="datetime-local"
                     className="field"
-                    value={publishedAt}
+                    value={publishedAt ? publishedAt.toString() : ''}
                     onChange={(e) => setPublishedAt(e.target.value)}
                   />
                 </div>

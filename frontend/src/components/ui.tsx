@@ -26,13 +26,15 @@ export function Card({
   children,
   className = '',
   hover = false,
+  style,
 }: {
   children: ReactNode
   className?: string
   hover?: boolean
+  style?: React.CSSProperties
 }) {
   return (
-    <div className={`${hover ? 'card-interactive' : 'card'} ${className}`}>{children}</div>
+    <div className={`${hover ? 'card-interactive' : 'card'} ${className}`} style={style}>{children}</div>
   )
 }
 
