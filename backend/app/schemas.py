@@ -509,6 +509,17 @@ class HealthResponse(BaseModel):
 # --------------------------------------------------------------------------------------
 # Media (Phase 2)
 # --------------------------------------------------------------------------------------
+class MediaAnalysisSummary(BaseModel):
+    """Plain-English summary of how far analysis got for one asset."""
+
+    state: str = "uploaded"  # uploaded|processing|complete|partial|failed
+    label: str = "Uploaded"
+    message: str = "This file is saved and waiting for analysis."
+    completed: list[str] = Field(default_factory=list)
+    incomplete: list[str] = Field(default_factory=list)
+    retryable: bool = False
+
+
 class MediaAssetRead(ORMModel):
     """Public view of an uploaded asset. Never exposes storage paths."""
 
@@ -524,14 +535,24 @@ class MediaAssetRead(ORMModel):
     content_id: int | None = None
     created_at: datetime
     has_dna: bool = False
+    has_insights: bool = False
+    can_create_content: bool = False
+    preview_available: bool = True
     job_status: str | None = None
+    analysis: MediaAnalysisSummary = Field(default_factory=MediaAnalysisSummary)
 
 
 class MediaJobStep(BaseModel):
-    """One pipeline step's outcome: ok | failed | skipped | degraded."""
+    """One pipeline step's outcome.
+
+    ``status`` is one of ``completed``, ``failed``, ``degraded``,
+    ``skipped`` or ``not_applicable``. ``message`` is safe for end users;
+    ``detail`` is technical diagnostics for developers.
+    """
 
     status: str = "skipped"
     detail: str = ""
+    message: str = ""
 
 
 class MediaJobRead(ORMModel):
@@ -543,6 +564,7 @@ class MediaJobRead(ORMModel):
     steps: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
     completed_at: datetime | None = None
+    retryable: bool = False
 
 
 class MediaAssetDetail(MediaAssetRead):
@@ -550,6 +572,43 @@ class MediaAssetDetail(MediaAssetRead):
 
     dna: "ContentDNARead | None" = None
     jobs: list[MediaJobRead] = Field(default_factory=list)
+
+
+class ContentDNAScore(BaseModel):
+    """One evaluated axis. ``value is None`` means "not evaluated"."""
+
+    value: float | None = None
+    status: str = "not_evaluated"  # evaluated|not_evaluated|not_applicable
+    meaning: str = ""
+    source: str = ""  # heuristic|llm
+    reason: str = ""
+
+
+class ContentDNARecommendation(BaseModel):
+    title: str
+    detail: str
+    basis: str = ""
+
+
+class ContentDNABrand(BaseModel):
+    status: str = "not_configured"  # configured|not_configured|not_evaluated
+    name: str = ""
+    message: str = "Add a brand profile to evaluate brand alignment."
+
+
+class ContentDNAInsights(BaseModel):
+    summary: str = ""
+    topic: str = ""
+    main_message: str = ""
+    content_format: str = ""
+    key_points: list[str] = Field(default_factory=list)
+    recommendations: list[ContentDNARecommendation] = Field(default_factory=list)
+    audience: str = ""
+    strategy_signals: list[str] = Field(default_factory=list)
+    brand: ContentDNABrand = Field(default_factory=ContentDNABrand)
+    scores: dict[str, ContentDNAScore] = Field(default_factory=dict)
+    generated_by: str = ""  # llm|heuristic
+    notes: list[str] = Field(default_factory=list)
 
 
 class ContentDNARead(ORMModel):
@@ -563,10 +622,11 @@ class ContentDNARead(ORMModel):
     visual_tags: list[str] = Field(default_factory=list)
     keyframe_analyses: list[dict[str, Any]] = Field(default_factory=list)
     keyframes: list[int] = Field(default_factory=list)  # keyframe indexes
-    # NULL = not evaluated (Phase 3 implements real scoring)
+    # NULL = not evaluated (never a fabricated zero)
     hook_score: float | None = None
     clarity_score: float | None = None
     brand_alignment: float | None = None
+    insights: ContentDNAInsights | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -585,6 +645,13 @@ class MediaUploadResponse(BaseModel):
     asset: MediaAssetRead
     job: MediaJobRead
     warnings: list[str] = Field(default_factory=list)
+
+
+class MediaRetryResponse(BaseModel):
+    asset: MediaAssetRead
+    job: MediaJobRead
+    message: str
+    deduplicated: bool = False
 
 
 class MediaAssetListResponse(BaseModel):

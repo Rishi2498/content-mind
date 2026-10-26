@@ -115,6 +115,12 @@ async def save_upload(user_id: int, upload: UploadFile, media_type: str) -> Stor
     )
 
 
+def stored_path(user_id: int, stored_name: str) -> Path:
+    """Return the confined path for a stored file (may or may not exist)."""
+    user_dir = _user_dir(user_id)
+    return _confine(user_dir, user_dir / sanitize_filename(stored_name))
+
+
 def delete_stored(user_id: int, stored_name: str) -> bool:
     """Delete a stored file, confined to the user's directory."""
     user_dir = _user_dir(user_id)

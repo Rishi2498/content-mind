@@ -60,13 +60,22 @@ async def lifespan(app: FastAPI):
     if not settings.llm_configured:
         if settings.llm_provider == "gemini":
             logger.warning(
-                "LLM_PROVIDER=gemini but GEMINI_API_KEY is not set - generation will "
-                "use the deterministic engine."
+                "LLM_PROVIDER=gemini but GEMINI_API_KEY is not set - visual analysis "
+                "and generation will be unavailable. Uploads are still saved and can be "
+                "retried after configuration."
             )
         else:
             logger.warning(
-                "LLM provider is not configured - generation will use the deterministic engine."
+                "LLM provider is not configured - visual analysis and generation will be "
+                "unavailable. Uploads are still saved and can be retried after configuration."
             )
+    else:
+        logger.info(
+            "LLM provider ready: %s (text model=%s, vision model=%s)",
+            settings.llm_provider,
+            settings.llm_model,
+            settings.effective_vision_model,
+        )
     if not settings.instagram_configured:
         logger.warning("Instagram integration not configured - Instagram features disabled.")
     else:

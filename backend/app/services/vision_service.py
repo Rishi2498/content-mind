@@ -1,9 +1,13 @@
 """Vision analysis of extracted keyframes.
 
 Each keyframe is sent to the vision-capable LLM, which returns a strict
-``LLMImageAnalysis`` (scene description, OCR text, visual tags). When no
-vision provider is configured the service degrades gracefully: analyses are
-empty and the caller marks the vision step as degraded rather than failed.
+``LLMImageAnalysis`` (scene description, OCR text, visual tags). A failed
+provider call is *never* converted into an empty "successful" analysis: the
+caller receives a structured failure kind so the pipeline can report the
+vision step as failed/retryable while preserving metadata and transcript work.
+
+The provider itself is easy to mock in tests: ``get_llm_service`` is the only
+dependency and ``generate_json_with_images`` is the only call.
 """
 
 from __future__ import annotations
@@ -31,6 +35,19 @@ _USER = (
     "object matching the required schema."
 )
 
+ERROR_MESSAGES = {
+    "configuration": "Visual analysis isn't available because the AI provider isn't configured.",
+    "auth": "The AI provider rejected the configured credentials.",
+    "rate_limit": "The AI provider is busy right now. Try again in a moment.",
+    "timeout": "Visual analysis took too long to complete.",
+    "unavailable": "The AI provider is temporarily unavailable.",
+    "network": "The AI provider could not be reached.",
+    "invalid_request": "The AI provider couldn't process this image.",
+    "invalid_response": "The AI provider returned an unreadable analysis.",
+    "partial": "Some frames couldn't be analyzed.",
+    "unknown": "Visual analysis couldn't be completed.",
+}
+
 
 @dataclass
 class VisionResult:
@@ -38,52 +55,116 @@ class VisionResult:
     failed_frames: int = 0
     degraded: bool = False
     note: str = ""
+    error_kind: str = ""
+    user_message: str = ""
+    attempted: bool = True
+
+    @property
+    def ok(self) -> bool:
+        return bool(self.analyses) and not self.degraded
+
+    @property
+    def failed(self) -> bool:
+        return self.attempted and not self.analyses
 
 
-def analyze_keyframe(path: Path) -> tuple[LLMImageAnalysis | None, str]:
-    """Analyze one keyframe. Returns ``(analysis_or_None, note)``."""
+def _is_meaningful(analysis: LLMImageAnalysis) -> bool:
+    """An all-empty object is not a successful image analysis.
+
+    Colors alone are not enough for Content DNA: scene text, OCR text, or a
+    visual tag must be present, otherwise the result would look analyzed while
+    contributing no evidence to the insights.
+    """
+    return bool(
+        (analysis.scene_description or "").strip()
+        or (analysis.ocr_text or "").strip()
+        or any((tag or "").strip() for tag in analysis.visual_tags)
+    )
+
+
+def _failure_result(
+    kind: str,
+    note: str,
+    *,
+    attempted: bool = True,
+    failed_frames: int = 0,
+) -> VisionResult:
+    return VisionResult(
+        failed_frames=failed_frames,
+        degraded=True,
+        note=note,
+        error_kind=kind,
+        user_message=ERROR_MESSAGES.get(kind, ERROR_MESSAGES["unknown"]),
+        attempted=attempted,
+    )
+
+
+def analyze_keyframe(path: Path) -> tuple[LLMImageAnalysis | None, str, str]:
+    """Analyze one keyframe. Returns ``(analysis_or_None, note, error_kind)``."""
     if not path.is_file():
-        return None, "keyframe-missing"
+        return None, "keyframe-missing", "invalid_request"
     llm = get_llm_service()
 
-    def _fallback() -> dict:
-        return {}
-
+    # Deliberately no ``fallback``: an empty dict validates against this
+    # all-optional schema and would look like a successful analysis.
     analysis, note = llm.generate_json_with_images(
         LLMImageAnalysis,
         system=_SYSTEM,
         user=_USER,
         images=[path],
-        fallback=_fallback,
+        fallback=None,
     )
     if analysis is None:
-        return None, note
-    return analysis, note
+        kind = getattr(llm, "last_error_kind", None) or "unknown"
+        return None, note, kind
+    if not _is_meaningful(analysis):
+        return None, "empty-analysis", "invalid_response"
+    return analysis, note, ""
 
 
 def analyze_keyframes(paths: list[Path]) -> VisionResult:
-    """Analyze all keyframes; tolerate per-frame failures."""
+    """Analyze all keyframes; tolerate per-frame failures without faking success."""
     if not paths:
-        return VisionResult(degraded=True, note="no-keyframes")
+        return VisionResult(
+            degraded=True,
+            note="no-keyframes",
+            error_kind="invalid_request",
+            user_message="No images were available to analyze.",
+            attempted=False,
+        )
     llm = get_llm_service()
     if not llm.available:
-        return VisionResult(degraded=True, note="vision-llm-unavailable")
+        return _failure_result(
+            "configuration", "vision-llm-unavailable", attempted=False
+        )
 
     analyses: list[LLMImageAnalysis] = []
     failed = 0
+    last_kind = ""
+    last_note = ""
     for path in paths:
-        analysis, _note = analyze_keyframe(path)
+        analysis, note, kind = analyze_keyframe(path)
         if analysis is not None:
             analyses.append(analysis)
         else:
             failed += 1
+            last_kind = kind or "unknown"
+            last_note = note
 
-    degraded = not analyses or failed > 0
+    if not analyses:
+        return _failure_result(
+            last_kind or "unknown", last_note or "no-analysis", failed_frames=failed
+        )
+
+    degraded = failed > 0
     return VisionResult(
         analyses=analyses,
         failed_frames=failed,
         degraded=degraded,
         note=f"{len(analyses)}/{len(paths)} frames analyzed",
+        error_kind="partial" if degraded else "",
+        user_message=ERROR_MESSAGES["partial"] if degraded else "",
+        attempted=True,
     )
 
 

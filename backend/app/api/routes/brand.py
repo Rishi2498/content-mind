@@ -52,8 +52,8 @@ def upsert_brand(
     existing.brand_name = payload.brand_name
     existing.target_audience = payload.target_audience or existing.target_audience
     existing.tone = payload.tone or existing.tone
-    existing.preferred_formats = payload.preferred_formats or existing.preferred_formats
-    existing.preferred_platforms = payload.preferred_platforms or existing.preferred_platforms
+    existing.preferred_formats = payload.preferred_formats or (existing.preferred_formats or [])
+    existing.preferred_platforms = payload.preferred_platforms or (existing.preferred_platforms or [])
     existing.description = payload.description or existing.description
     existing.is_active = True
     db.commit()

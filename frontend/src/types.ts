@@ -255,20 +255,41 @@ export interface DemoResetResponse {
 
 // ---- Media (Phase 2) -----------------------------------------------------------
 
+export type MediaAnalysisState = 'uploaded' | 'processing' | 'complete' | 'partial' | 'failed'
+
+export interface MediaAnalysisSummary {
+  state: MediaAnalysisState
+  label: string
+  message: string
+  completed: string[]
+  incomplete: string[]
+  retryable: boolean
+}
+
 export interface MediaAsset {
   id: number
   filename: string
   mime_type: string
   file_size: number
   media_type: 'video' | 'image' | 'audio'
-  status: 'uploaded' | 'processing' | 'ready' | 'failed'
+  status: 'uploaded' | 'processing' | 'ready' | 'partial' | 'failed'
   duration_seconds: number | null
   width: number | null
   height: number | null
   content_id: number | null
   created_at: string
   has_dna: boolean
+  has_insights: boolean
+  can_create_content: boolean
+  preview_available: boolean
   job_status: string | null
+  analysis: MediaAnalysisSummary
+}
+
+export interface MediaJobStep {
+  status: string
+  detail: string
+  message: string
 }
 
 export interface MediaJob {
@@ -277,9 +298,43 @@ export interface MediaJob {
   job_type: string
   status: 'pending' | 'processing' | 'completed' | 'failed'
   error: string
-  steps: Record<string, { status: string; detail: string }>
+  steps: Record<string, MediaJobStep>
   created_at: string
   completed_at: string | null
+  retryable: boolean
+}
+
+export interface ContentDNAScore {
+  value: number | null
+  status: 'evaluated' | 'not_evaluated' | 'not_applicable'
+  meaning: string
+  source: string
+  reason: string
+}
+
+export interface ContentDNARecommendation {
+  title: string
+  detail: string
+  basis: string
+}
+
+export interface ContentDNAInsights {
+  summary: string
+  topic: string
+  main_message: string
+  content_format: string
+  key_points: string[]
+  recommendations: ContentDNARecommendation[]
+  audience: string
+  strategy_signals: string[]
+  brand: {
+    status: string
+    name: string
+    message: string
+  }
+  scores: Record<string, ContentDNAScore>
+  generated_by: string
+  notes: string[]
 }
 
 export interface ContentDNA {
@@ -296,6 +351,7 @@ export interface ContentDNA {
   hook_score: number | null
   clarity_score: number | null
   brand_alignment: number | null
+  insights: ContentDNAInsights | null
   created_at: string
   updated_at: string
 }
@@ -316,6 +372,13 @@ export interface MediaUploadResponse {
   asset: MediaAsset
   job: MediaJob
   warnings: string[]
+}
+
+export interface MediaRetryResponse {
+  asset: MediaAsset
+  job: MediaJob
+  message: string
+  deduplicated: boolean
 }
 
 export interface MediaJobListResponse {

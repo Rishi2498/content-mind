@@ -228,6 +228,11 @@ class Settings:
             and self.llm_provider not in {"heuristic", "none", "disabled"}
         )
 
+    @property
+    def effective_vision_model(self) -> str:
+        """Vision uses VISION_MODEL when set, otherwise the text model."""
+        return self.vision_model or self.llm_model
+
     def safe_dict(self) -> dict:
         """Configuration snapshot safe to expose over the API (no secrets)."""
         return {
@@ -256,6 +261,8 @@ class Settings:
                 "max_video_mb": self.media_max_video_mb,
                 "max_image_mb": self.media_max_image_mb,
                 "whisper_provider": self.whisper_provider,
+                "vision_configured": self.llm_configured,
+                "vision_model": self.effective_vision_model,
             },
             "instagram": {
                 "configured": self.instagram_configured,

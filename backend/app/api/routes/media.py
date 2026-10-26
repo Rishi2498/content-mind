@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -19,9 +20,10 @@ from ...schemas import (
     MediaAssetRead,
     MediaJobListResponse,
     MediaJobRead,
+    MediaRetryResponse,
     MediaUploadResponse,
 )
-from ...services import media_service
+from ...services import media_service, media_storage
 
 logger = logging.getLogger("contentmind.routes.media")
 router = APIRouter()
@@ -78,6 +80,73 @@ def get_asset(
     if asset is None or asset.user_id != current_user.id:
         raise HTTPException(status_code=404, detail=f"Media asset {asset_id} not found")
     return media_service.asset_to_detail(db, asset)
+
+
+@router.post(
+    "/assets/{asset_id}/retry",
+    response_model=MediaRetryResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def retry_analysis(
+    asset_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> MediaRetryResponse:
+    """Re-run analysis without re-uploading. Idempotent while a job is active."""
+    try:
+        result = media_service.create_retry_job(
+            db, user_id=current_user.id, asset_id=asset_id
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=f"Media asset {asset_id} not found") from exc
+    except media_service.RetryNotAllowed as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    if not result.deduplicated:
+        asset = db.get(MediaAsset, asset_id)
+        assert asset is not None
+        media_service.enqueue_processing(background_tasks, asset.id, current_user.id, result.job.id)
+    return result
+
+
+@router.get("/assets/{asset_id}/file")
+def preview_asset_file(
+    asset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FileResponse:
+    """Serve the owner's original upload for in-app preview.
+
+    Only browser-safe media MIME types are rendered inline; anything else is
+    downloaded as an attachment. The endpoint is JWT-protected and never
+    reveals the on-disk path.
+    """
+    asset = db.get(MediaAsset, asset_id)
+    if asset is None or asset.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail=f"Media asset {asset_id} not found")
+    try:
+        path = media_storage.stored_path(current_user.id, asset.stored_name)
+    except media_storage.MediaStorageError as exc:
+        raise HTTPException(status_code=404, detail="Media file not found") from exc
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Media file not found")
+
+    mime = (asset.mime_type or "").split(";", 1)[0].strip().lower()
+    safe_inline = mime.startswith(("image/", "video/", "audio/")) and mime not in {
+        "image/svg+xml",
+        "image/svg",
+    }
+    return FileResponse(
+        path,
+        media_type=mime if safe_inline else "application/octet-stream",
+        filename=asset.filename,
+        content_disposition_type="inline" if safe_inline else "attachment",
+        headers={
+            "Cache-Control": "private, max-age=60",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.delete("/assets/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
